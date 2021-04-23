@@ -1,6 +1,4 @@
-image: bitriseio/docker-android:v2019_11_09-08_04-b1834
-# you can find latest docker image at https://hub.docker.com/r/bitriseio/docker-android/tags
-# to ensure backward compatability we should always use a concrete docker image version and NOT latest!
+image: docker-registry.sensorberg.io:443/android/docker-android-ci:0.2.4
 
 variables:
   GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
@@ -8,11 +6,11 @@ variables:
 stages:
   - test
 
-cache:
-  key: $CI_PROJECT_NAME
-  paths:
-    - .gradle/wrapper
-    - .gradle/caches
+#cache:
+#  key: $CI_PROJECT_NAME
+#  paths:
+#    - .gradle/wrapper
+#    - .gradle/caches
 
 merge_request:
   stage: test
@@ -22,19 +20,36 @@ merge_request:
     paths:
       - "*/build/reports"
   tags:
+    - docker
+    - hetzner
     - kvm
+    - x86
   only:
     - merge_requests
   script:
-    # run emulator
-    - pushd $ANDROID_HOME
-    - tools/bin/avdmanager create avd -f -n cli_emu -b x86 -g google_apis -d "Nexus 5X" -c 128M -k "system-images;android-28;google_apis;x86"
-    - emulator/emulator -avd cli_emu -no-audio -no-window -gpu swiftshader_indirect -debug-init -wipe-data -no-snapshot &
-    - popd
-    - sleep 5
-    - echo "Emulator booting ... "
     # build
     - ./gradlew clean testDebugUnitTest lintDebug assembleDebug assembleAndroidTest
-    # await for emulator
-    - bash  <(curl -s https://git.sensorberg.io/snippets/4/raw)
+
+    # Boot emulator & Run Android Tests
+    - ./ci_scripts/emulator/boot_emulator.sh
+    - ./ci_scripts/emulator/waitForEmulator.sh
     - ./gradlew cAT
+
+deploy_release:
+  stage: test
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - "*/build/reports"
+      - "*/build/outputs/aar"
+  tags:
+    - docker
+    - hetzner
+    - kvm
+    - x86
+  only:
+    - tags
+  script:
+    # build
+    - ./gradlew clean testReleaseUnitTest assemble assembleAndroidTest
+    - ./gradlew uploadArchives

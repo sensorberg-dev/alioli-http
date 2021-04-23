@@ -56,19 +56,12 @@ dependencies {
 
 mavenPublish {
     targets {
-        internalMaven {
+        uploadArchives {
             signing = false
-            releaseRepositoryUrl = "http://maven.sensorberg.io/artifactory/libs-release-local/"
-            snapshotRepositoryUrl = "http://maven.sensorberg.io/artifactory/libs-snapshot-local/"
+            releaseRepositoryUrl = "https://maven.sensorberg.io/artifactory/libs-release-local/"
+            snapshotRepositoryUrl = "https://maven.sensorberg.io/artifactory/libs-snapshot-local/"
             repositoryUsername = findProperty("MAVEN_USERNAME", null)
             repositoryPassword = findProperty("MAVEN_PASSWORD", null)
-        }
-        jcenterMaven {
-            signing = false
-            releaseRepositoryUrl = "https://bintray.com/api/v1/maven/sensorberg/maven/alioli-http/;publish=1"
-            snapshotRepositoryUrl = "https"
-            repositoryUsername = findProperty("MAVEN_JCENTER_USERNAME", null)
-            repositoryPassword = findProperty("MAVEN_JCENTER_PASSWORD", null)
         }
     }
 }
